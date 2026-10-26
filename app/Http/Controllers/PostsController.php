@@ -53,7 +53,27 @@ class PostsController extends Controller
 
     public function store(Request $request)
     {
-        return response('', 200);
+        $accept = $request->header('Accept');
+        if (!in_array($accept, ['application/json', 'application/xml'])) {
+            return response('Not Acceptable!', 406);
+        }
+
+        $contentType = $request->header('Content-Type');
+        if ($contentType !== 'application/json' && !str_starts_with((string)$contentType, 'application/json')) {
+            return response('Unsupported Media Type', 415);
+        }
+
+        $this->validate($request, [
+            'title'   => 'required|string',
+            'content' => 'required|string',
+            'user_id' => 'required|integer',
+        ]);
+
+        $post = Post::create($request->only(['title', 'content', 'user_id', 'status']));
+        return $this->resolveResponse($request, [
+            'message' => 'Post created',
+            'result'  => $post->toArray()
+        ], 201);
     }
 
     public function update(Request $request, $id)
