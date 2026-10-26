@@ -205,4 +205,28 @@ class PostsControllerTest extends TestCase
         $this->assertStringContainsString('<message>Post updated</message>', $this->response->getContent());
         $this->assertStringContainsString('<title>XML Update</title>', $this->response->getContent());
     }
+
+    // ─── Review Focus / Edge Cases ───────────────────────────────────────────
+
+    public function test_accept_wildcard_returns_406(): void
+    {
+        $this->call('GET', '/posts', [], [], [], ['HTTP_ACCEPT' => '*/*']);
+        $this->assertEquals(406, $this->response->getStatusCode());
+        $this->assertEquals('Not Acceptable!', $this->response->getContent());
+    }
+
+    public function test_empty_accept_header_returns_406(): void
+    {
+        $this->call('GET', '/posts', [], [], [], ['HTTP_ACCEPT' => '']);
+        $this->assertEquals(406, $this->response->getStatusCode());
+        $this->assertEquals('Not Acceptable!', $this->response->getContent());
+    }
+
+    public function test_xml_special_characters_are_escaped(): void
+    {
+        $post = Post::create(['title' => '<b>Title & Special</b>', 'content' => 'AT&T <test>', 'user_id' => 1]);
+        $this->call('GET', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/xml']);
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertStringContainsString('&lt;b&gt;Title &amp; Special&lt;/b&gt;', $this->response->getContent());
+    }
 }
