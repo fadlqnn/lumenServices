@@ -25,6 +25,14 @@ $router->get('/scores', ['middleware' => 'login', function () use ($router) {
     return "<h1>Scores</h1><p>Persib 2-0 Arema</p>";
 }]);
 
+// Content Negotiation UI / View Studio
+$router->get('/playground', function () {
+    return view('playground');
+});
+$router->get('/posts-view', function () {
+    return view('playground');
+});
+
 $router->get('/posts', 'PostsController@index');
 $router->get('/post/{id}', 'PostsController@show');
 $router->post('/posts', 'PostsController@store');

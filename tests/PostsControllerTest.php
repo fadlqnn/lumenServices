@@ -229,4 +229,11 @@ class PostsControllerTest extends TestCase
         $this->assertEquals(200, $this->response->getStatusCode());
         $this->assertStringContainsString('&lt;b&gt;Title &amp; Special&lt;/b&gt;', $this->response->getContent());
     }
+
+    public function test_playground_view_renders_successfully(): void
+    {
+        $this->get('/playground');
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertStringContainsString('Lumen API Studio', $this->response->getContent());
+    }
 }
