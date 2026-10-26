@@ -26,6 +26,10 @@ $router->get('/scores', ['middleware' => 'login', function () use ($router) {
 }]);
 
 $router->get('/posts', 'PostsController@index');
+$router->get('/post/{id}', 'PostsController@show');
+$router->post('/posts', 'PostsController@store');
+$router->put('/post/{id}', 'PostsController@update');
+$router->delete('/post/{id}', 'PostsController@destroy');
 
 // Products CRUD
 $router->get('/products', 'ProductsController@index');
