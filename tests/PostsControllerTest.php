@@ -13,16 +13,18 @@ class PostsControllerTest extends TestCase
 
     public function test_routes_exist_for_posts_crud(): void
     {
-        $this->call('GET', '/post/1', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $post = Post::create(['title' => 'Route Check', 'content' => 'Content', 'user_id' => 1]);
+
+        $this->call('GET', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertNotEquals(404, $this->response->getStatusCode());
 
         $this->call('POST', '/posts', [], [], [], ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json']);
         $this->assertNotEquals(404, $this->response->getStatusCode());
 
-        $this->call('PUT', '/post/1', [], [], [], ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json']);
+        $this->call('PUT', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json']);
         $this->assertNotEquals(404, $this->response->getStatusCode());
 
-        $this->call('DELETE', '/post/1', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->call('DELETE', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertNotEquals(404, $this->response->getStatusCode());
     }
 
@@ -94,5 +96,61 @@ class PostsControllerTest extends TestCase
         $this->assertEquals('application/xml', $this->response->headers->get('Content-Type'));
         $this->assertStringContainsString('<message>Post created</message>', $this->response->getContent());
         $this->assertStringContainsString('<title>XML Post</title>', $this->response->getContent());
+    }
+
+    // ─── Task 3: Tantangan 2 — show() & destroy() ─────────────────────────────
+
+    public function test_show_without_accept_returns_406(): void
+    {
+        $this->call('GET', '/post/1');
+        $this->assertEquals(406, $this->response->getStatusCode());
+        $this->assertEquals('Not Acceptable!', $this->response->getContent());
+    }
+
+    public function test_show_with_accept_json_returns_post(): void
+    {
+        $post = Post::create(['title' => 'Single Post', 'content' => 'Content here', 'user_id' => 1]);
+        $this->call('GET', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertStringContainsString('application/json', $this->response->headers->get('Content-Type'));
+        $data = json_decode($this->response->getContent(), true);
+        $this->assertEquals('post', $data['message']);
+        $this->assertEquals($post->id, $data['result']['id']);
+    }
+
+    public function test_show_with_accept_xml_returns_xml(): void
+    {
+        $post = Post::create(['title' => 'XML Show Post', 'content' => 'Content here', 'user_id' => 1]);
+        $this->call('GET', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/xml']);
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertEquals('application/xml', $this->response->headers->get('Content-Type'));
+        $this->assertStringContainsString('<title>XML Show Post</title>', $this->response->getContent());
+    }
+
+    public function test_destroy_without_accept_returns_406(): void
+    {
+        $this->call('DELETE', '/post/1');
+        $this->assertEquals(406, $this->response->getStatusCode());
+        $this->assertEquals('Not Acceptable!', $this->response->getContent());
+    }
+
+    public function test_destroy_with_accept_json_deletes_post(): void
+    {
+        $post = Post::create(['title' => 'To Delete', 'content' => 'Content here', 'user_id' => 1]);
+        $this->call('DELETE', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $data = json_decode($this->response->getContent(), true);
+        $this->assertEquals('Post deleted', $data['message']);
+        $this->assertNull(Post::find($post->id));
+    }
+
+    public function test_destroy_with_accept_xml_returns_xml(): void
+    {
+        $post = Post::create(['title' => 'To Delete XML', 'content' => 'Content here', 'user_id' => 1]);
+        $this->call('DELETE', "/post/{$post->id}", [], [], [], ['HTTP_ACCEPT' => 'application/xml']);
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertEquals('application/xml', $this->response->headers->get('Content-Type'));
+        $this->assertStringContainsString('<message>Post deleted</message>', $this->response->getContent());
+        $this->assertNull(Post::find($post->id));
     }
 }

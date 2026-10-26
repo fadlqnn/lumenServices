@@ -48,7 +48,16 @@ class PostsController extends Controller
 
     public function show(Request $request, $id)
     {
-        return response('', 200);
+        $accept = $request->header('Accept');
+        if (!in_array($accept, ['application/json', 'application/xml'])) {
+            return response('Not Acceptable!', 406);
+        }
+
+        $post = Post::findOrFail($id);
+        return $this->resolveResponse($request, [
+            'message' => 'post',
+            'result'  => $post->toArray()
+        ]);
     }
 
     public function store(Request $request)
@@ -83,6 +92,15 @@ class PostsController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        return response('', 200);
+        $accept = $request->header('Accept');
+        if (!in_array($accept, ['application/json', 'application/xml'])) {
+            return response('Not Acceptable!', 406);
+        }
+
+        $post = Post::findOrFail($id);
+        $post->delete();
+        return $this->resolveResponse($request, [
+            'message' => 'Post deleted'
+        ]);
     }
 }
