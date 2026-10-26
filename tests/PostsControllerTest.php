@@ -153,4 +153,56 @@ class PostsControllerTest extends TestCase
         $this->assertStringContainsString('<message>Post deleted</message>', $this->response->getContent());
         $this->assertNull(Post::find($post->id));
     }
+
+    // ─── Task 4: Tantangan 2+3 — update() ─────────────────────────────────────
+
+    public function test_update_without_accept_returns_406(): void
+    {
+        $post = Post::create(['title' => 'To Update', 'content' => 'Content', 'user_id' => 1]);
+        $this->call('PUT', "/post/{$post->id}", [], [], [],
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_CONTENT_TYPE' => 'application/json'],
+            '{"title":"New"}'
+        );
+        $this->assertEquals(406, $this->response->getStatusCode());
+        $this->assertEquals('Not Acceptable!', $this->response->getContent());
+    }
+
+    public function test_update_with_accept_no_content_type_returns_415(): void
+    {
+        $post = Post::create(['title' => 'To Update', 'content' => 'Content', 'user_id' => 1]);
+        $this->call('PUT', "/post/{$post->id}", [], [], [],
+            ['HTTP_ACCEPT' => 'application/json'],
+            '{"title":"New"}'
+        );
+        $this->assertEquals(415, $this->response->getStatusCode());
+        $this->assertEquals('Unsupported Media Type', $this->response->getContent());
+    }
+
+    public function test_update_valid_headers_returns_updated_post_as_json(): void
+    {
+        $post = Post::create(['title' => 'Old Title', 'content' => 'Old Content', 'user_id' => 1]);
+        $this->call('PUT', "/post/{$post->id}", [], [], [],
+            ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json', 'HTTP_CONTENT_TYPE' => 'application/json'],
+            json_encode(['title' => 'New Title', 'content' => 'New Content'])
+        );
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertStringContainsString('application/json', $this->response->headers->get('Content-Type'));
+        $data = json_decode($this->response->getContent(), true);
+        $this->assertEquals('Post updated', $data['message']);
+        $this->assertEquals('New Title', $data['result']['title']);
+        $this->assertEquals('New Content', $data['result']['content']);
+    }
+
+    public function test_update_accept_xml_returns_xml(): void
+    {
+        $post = Post::create(['title' => 'Old Title', 'content' => 'Old Content', 'user_id' => 1]);
+        $this->call('PUT', "/post/{$post->id}", [], [], [],
+            ['HTTP_ACCEPT' => 'application/xml', 'CONTENT_TYPE' => 'application/json', 'HTTP_CONTENT_TYPE' => 'application/json'],
+            json_encode(['title' => 'XML Update', 'content' => 'XML Content'])
+        );
+        $this->assertEquals(200, $this->response->getStatusCode());
+        $this->assertEquals('application/xml', $this->response->headers->get('Content-Type'));
+        $this->assertStringContainsString('<message>Post updated</message>', $this->response->getContent());
+        $this->assertStringContainsString('<title>XML Update</title>', $this->response->getContent());
+    }
 }

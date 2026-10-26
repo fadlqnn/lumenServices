@@ -87,7 +87,23 @@ class PostsController extends Controller
 
     public function update(Request $request, $id)
     {
-        return response('', 200);
+        $accept = $request->header('Accept');
+        if (!in_array($accept, ['application/json', 'application/xml'])) {
+            return response('Not Acceptable!', 406);
+        }
+
+        $contentType = $request->header('Content-Type');
+        if ($contentType !== 'application/json' && !str_starts_with((string)$contentType, 'application/json')) {
+            return response('Unsupported Media Type', 415);
+        }
+
+        $post = Post::findOrFail($id);
+        $post->update($request->only(['title', 'content', 'status', 'user_id']));
+
+        return $this->resolveResponse($request, [
+            'message' => 'Post updated',
+            'result'  => $post->fresh()->toArray()
+        ]);
     }
 
     public function destroy(Request $request, $id)
